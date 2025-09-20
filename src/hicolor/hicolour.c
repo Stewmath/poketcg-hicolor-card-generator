@@ -333,10 +333,10 @@ static void hicolor_save(const char * fname_base, const char * varname) {
     PrepareMap();
     PrepareAttributes();
 
-    if (opt_get_tile_dedupe()) {
-        DedupeTileset();
-        tile_count = TileCountDeduped;
-    }
+    /* if (opt_get_tile_dedupe()) { */
+    /*     DedupeTileset(); */
+    /*     tile_count = TileCountDeduped; */
+    /* } */
 
     ExportTileSet(fname_base);
     if (opt_get_precompiled_palette())
@@ -371,6 +371,7 @@ void hicolor_process_image(image_data * p_loaded_image, const char * fname_base,
 
 
 
+// Not useful for TCG
 static void DedupeTileset(void)
 {
     unsigned int map_tile_id;
@@ -415,10 +416,11 @@ static void PrepareTileSet(void) {
 
     uint8_t * p_buf = TileSet;
 
-    // Write out tilemap data, Left -> Right, Top -> Bottom, 16 bytes per tile
-    for (y=0; y<image_height; y=y+8)
+    // Write out tilemap data, 16 bytes per tile.
+    // To match the TCG format this outputs top to bottom first, then left to right.
+    for (x=0; x<IMAGE_WIDTH; x=x+8)
     {
-        for (x=0; x<IMAGE_WIDTH; x=x+8)
+        for (y=0; y<image_height; y=y+8)
         {
             for (dy=0; dy<8; dy++)
             {
@@ -487,17 +489,17 @@ static void ExportTileSet(const char * fname_base)
     strcat(filename, ".til");
     VERBOSE("Writing Tile Patterns to: %s\n", filename);
 
-    if (opt_get_tile_dedupe()) {
+    /* if (opt_get_tile_dedupe()) { */
 
-        int outbuf_sz_tiles = TileCountDeduped * TILE_SZ;
-        if (!file_write_from_buffer(filename, TileSetDeduped, outbuf_sz_tiles))
-            set_exit_error();
-    } else {
+    /*     int outbuf_sz_tiles = TileCountDeduped * TILE_SZ; */
+    /*     if (!file_write_from_buffer(filename, TileSetDeduped, outbuf_sz_tiles)) */
+    /*         set_exit_error(); */
+    /* } else { */
 
         int outbuf_sz_tiles = ((image_height / TILE_HEIGHT_PX) * (IMAGE_WIDTH / TILE_WIDTH_PX) * 8 * 2);
         if (!file_write_from_buffer(filename, TileSet, outbuf_sz_tiles))
             set_exit_error();
-    }
+    /* } */
 }
 
 
@@ -685,12 +687,8 @@ static void ExportMap(const char * fname_base)
     int tile_id = 0;
     for (unsigned int y = 0; y < y_height_in_tiles; y++) {
         for (unsigned int x = 0; x < IMAGE_WIDTH_IN_TILES; x++) {
-            uint8_t tile_num = MapTileIDs[x][y];
-
-            // This needs to happen here, after optional deduplication stage
-            // since that may rewrite the tile pattern order and indexes
-            if (opt_get_map_tile_order() != OPT_MAP_TILE_SEQUENTIAL_ORDER) // implied: OPT_MAP_TILE_ORDER_BY_VRAM_ID
-                tile_num = ((tile_num < 128) ? (tile_num) + 128 : (tile_num) - 128); // Previous ordering that was: 128 -> 255 -> 0 -> 127
+            // Ignoring the MapTileIDs array, it's become redundant for TCG.
+            uint8_t tile_num = (x * 6 + y) | 0x80;
 
             output_buf_map[tile_id] = tile_num;
             tile_id++;
