@@ -87,20 +87,20 @@ typedef struct
     u16       YSize;
     u8        BitDepth;
     u8        c1;
-    u8        data[160*BUF_HEIGHT][3];
+    u8        data[IMAGE_WIDTH*BUF_HEIGHT][3];
 } IMG_TYPE;
 
 
-// u8            QR[BUF_HEIGHT][160][3];
+// u8            QR[BUF_HEIGHT][IMAGE_WIDTH][3];
 u8            TileOffset[4];                 // Offset into screen for attribute start
 u8            TileWidth[4];                  // No of character attributes width
 u8            Pal[8][BUF_Y_REGION_COUNT_LR_RNDUP][28][3];             // Palettes for every other line
 u8            IdealPal[8][BUF_Y_REGION_COUNT_LR_RNDUP][4][3];         // The best fit palette
-u8            pic[160][BUF_HEIGHT][3];              // Original Picture
-u8            pic2[160][BUF_HEIGHT][3];             // Output picture
-u8            out[160][BUF_HEIGHT];                 // Output data
+u8            pic[IMAGE_WIDTH][BUF_HEIGHT][3];              // Original Picture
+u8            pic2[IMAGE_WIDTH][BUF_HEIGHT][3];             // Output picture
+u8            out[IMAGE_WIDTH][BUF_HEIGHT];                 // Output data
 
-u8            raw[2][160][BUF_HEIGHT][3];           // Original Picture Raw format.
+u8            raw[2][IMAGE_WIDTH][BUF_HEIGHT][3];           // Original Picture Raw format.
                                              // sourced from [0] = Normal , [1] = GB Color selected by ViewType
 
 // TODO: delete?
@@ -110,10 +110,10 @@ u8            Best[2][BUF_HEIGHT_IN_TILES_RNDUP];  // Best Attribute type to use
 u8            LConversion;                   // Conversion type for left hand side of the screen
 u8            RConversion;                   // Conversion type for right hand side of the screen
 // HWND          Ghdwnd;                          // Global window handle
-u8            MapTileIDs[20][BUF_HEIGHT_IN_TILES];           // Attribute table for final render
-u8            MapAttributes[20][BUF_HEIGHT_IN_TILES];        // Attribute table for final render
-uint8_t       TileSet[20 * BUF_HEIGHT_IN_TILES * TILE_SZ];   // Sequential Tileset Data in Game Boy 2bpp format
-uint8_t       TileSetDeduped[20 * BUF_HEIGHT_IN_TILES * TILE_SZ];   // Sequential Tileset Data in Game Boy 2bpp format
+u8            MapTileIDs[IMAGE_WIDTH_IN_TILES][BUF_HEIGHT_IN_TILES];           // Attribute table for final render
+u8            MapAttributes[IMAGE_WIDTH_IN_TILES][BUF_HEIGHT_IN_TILES];        // Attribute table for final render
+uint8_t       TileSet[IMAGE_WIDTH_IN_TILES * BUF_HEIGHT_IN_TILES * TILE_SZ];   // Sequential Tileset Data in Game Boy 2bpp format
+uint8_t       TileSetDeduped[IMAGE_WIDTH_IN_TILES * BUF_HEIGHT_IN_TILES * TILE_SZ];   // Sequential Tileset Data in Game Boy 2bpp format
 unsigned int  TileCountDeduped;
 // u8            OldLConv=0;                    // Conversion type
 // u8            OldRConv=0;
@@ -121,7 +121,7 @@ uint8_t *     pBuffer;
 // u8            Message[2000];
 s32           ConvertType; //=2;
 
-u8            Data[160*BUF_HEIGHT*3];  // Gets used for quantizing regions. Maybe other things too?
+u8            Data[IMAGE_WIDTH*BUF_HEIGHT*3];  // Gets used for quantizing regions. Maybe other things too?
 
 u32           TempD;
 s32           BestLine=0;  // TODO: convert to local var
@@ -135,8 +135,8 @@ u32           BestQuantLine;
 // bmihsource.biHeight         = BUF_HEIGHT;
 // bmihsource.biPlanes         = 1;
 // bmihsource.biBitCount       = 24;
-static      uint8_t Bitsdest[160 * BUF_HEIGHT * 3]; // TODO: RGBA 4 bytes per pixel?
-static      uint8_t Bitssource[160 * BUF_HEIGHT * 3];
+static      uint8_t Bitsdest[IMAGE_WIDTH * BUF_HEIGHT * 3]; // TODO: RGBA 4 bytes per pixel?
+static      uint8_t Bitssource[IMAGE_WIDTH * BUF_HEIGHT * 3];
 //
 static      uint8_t *pBitsdest = Bitsdest;
             uint8_t *pBitssource = Bitssource;
@@ -275,7 +275,7 @@ static void hicolor_image_import(image_data * p_loaded_image) {
     uint8_t * p_input_img = p_loaded_image->p_img_data;
 
     for (unsigned int y=0; y< image_height; y++) {
-        for (unsigned int x=0; x< 160; x++) {
+        for (unsigned int x=0; x< IMAGE_WIDTH; x++) {
 
             // Clamp to CGB max R/G/B value in RGB 888 mode (31u << 3)
             // png_image[].rgb -> pic2[].rgb -> pBitssource[].bgr??
@@ -292,10 +292,10 @@ static void hicolor_image_import(image_data * p_loaded_image) {
     // - display as windows DIBs (formerly)
     // - and for some calculations at the end of ConvertRegions()
     for (unsigned int y=0; y<image_height; y++) {
-        for (unsigned int x=0; x<160; x++) {
+        for (unsigned int x=0; x<IMAGE_WIDTH; x++) {
             for (unsigned int z=0; z<3; z++) {
                 // TODO: (2-z) seems to be swapping RGB for BGR?
-                *(pBitssource+(image_y_max-y)*3*160+x*3+z) = pic2[x][y][2-z];            // Invert the dib, cos windows likes it like that !!
+                *(pBitssource+(image_y_max-y)*3*IMAGE_WIDTH+x*3+z) = pic2[x][y][2-z];            // Invert the dib, cos windows likes it like that !!
             }
         }
     }
@@ -308,7 +308,7 @@ static void hicolor_image_import(image_data * p_loaded_image) {
 static void hicolor_convert(void) {
     DBG("hicolor_convert()\n");
 
-    for(unsigned int x=0; x<160; x++)
+    for(unsigned int x=0; x<IMAGE_WIDTH; x++)
     {
         for(unsigned int y=0; y<image_height; y++)
         {
@@ -318,7 +318,7 @@ static void hicolor_convert(void) {
 
             for(unsigned int i=0; i<3; i++)
             {
-                *(Data + y*160*3+x*3+i) = pic[x][y][i];
+                *(Data + y*IMAGE_WIDTH*3+x*3+i) = pic[x][y][i];
             }
         }
     }
@@ -330,7 +330,7 @@ static void hicolor_convert(void) {
 static void hicolor_save(const char * fname_base, const char * varname) {
 
     // Default tile count to non-deduplicated number
-    int tile_count = y_height_in_tiles * (160 / TILE_WIDTH_PX);
+    int tile_count = y_height_in_tiles * (IMAGE_WIDTH / TILE_WIDTH_PX);
 
     DBG("hicolor_save()\n");
     PrepareTileSet();
@@ -383,7 +383,7 @@ static void DedupeTileset(void)
     TileCountDeduped = 0;
     // Traverse all tiles in the image/map
     for (unsigned int mapy = 0; mapy < y_height_in_tiles; mapy++) {
-        for (unsigned int mapx = 0; mapx < 20; mapx++) {
+        for (unsigned int mapx = 0; mapx < IMAGE_WIDTH_IN_TILES; mapx++) {
 
             map_tile_id = MapTileIDs[mapx][mapy];
             map_tile_id += (MapAttributes[mapx][mapy] & CGB_ATTR_TILES_BANK) ? CGB_TILES_START_BANK_1 : CGB_TILES_START_BANK_0;
@@ -422,7 +422,7 @@ static void PrepareTileSet(void) {
     // Write out tilemap data, Left -> Right, Top -> Bottom, 16 bytes per tile
     for (y=0; y<image_height; y=y+8)
     {
-        for (x=0; x<160; x=x+8)
+        for (x=0; x<IMAGE_WIDTH; x=x+8)
         {
             for (dy=0; dy<8; dy++)
             {
@@ -451,7 +451,7 @@ static void PrepareMap(void) {
     // the attribute tile index+256 bit is auto-calculated in the attribute map in PrepareAttributes()
     uint8_t tile_id = 0;
     for (unsigned int mapy = 0; mapy < y_height_in_tiles; mapy++) {
-        for (unsigned int mapx = 0; mapx < 20; mapx++) {
+        for (unsigned int mapx = 0; mapx < IMAGE_WIDTH_IN_TILES; mapx++) {
 
             MapTileIDs[mapx][mapy] = tile_id;
             tile_id++;
@@ -504,7 +504,7 @@ static void ExportTileSet(const char * fname_base)
             set_exit_error();
     } else {
 
-        int outbuf_sz_tiles = ((image_height / TILE_HEIGHT_PX) * (160 / TILE_WIDTH_PX) * 8 * 2);
+        int outbuf_sz_tiles = ((image_height / TILE_HEIGHT_PX) * (IMAGE_WIDTH / TILE_WIDTH_PX) * 8 * 2);
         if (!file_write_from_buffer(filename, TileSet, outbuf_sz_tiles))
             set_exit_error();
     }
@@ -689,12 +689,12 @@ static void ExportMap(const char * fname_base)
     strcat(filename, ".map");
     VERBOSE("Writing Tile Map to: %s\n", filename);
 
-    int outbuf_sz_map = (20 * y_height_in_tiles);
+    int outbuf_sz_map = (IMAGE_WIDTH_IN_TILES * y_height_in_tiles);
     uint8_t output_buf_map[outbuf_sz_map];
 
     int tile_id = 0;
     for (unsigned int y = 0; y < y_height_in_tiles; y++) {
-        for (unsigned int x = 0; x < 20; x++) {
+        for (unsigned int x = 0; x < IMAGE_WIDTH_IN_TILES; x++) {
             uint8_t tile_num = MapTileIDs[x][y];
 
             // This needs to happen here, after optional deduplication stage
@@ -720,13 +720,13 @@ static void ExportMapAttributes(const char * fname_base)
     strcat(filename, ".atr");
     VERBOSE("Writing Attribute Map to: %s\n", filename);
 
-    int outbuf_sz_map = (20 * y_height_in_tiles);
+    int outbuf_sz_map = (IMAGE_WIDTH_IN_TILES * y_height_in_tiles);
     uint8_t output_buf_map[outbuf_sz_map];
 
     int tile_id = 0;
     for (unsigned int y = 0; y < y_height_in_tiles; y++)
     {
-        for (unsigned int x = 0; x < 20; x++)
+        for (unsigned int x = 0; x < IMAGE_WIDTH_IN_TILES; x++)
         {
             output_buf_map[tile_id++] = MapAttributes[x][y];
         }
@@ -841,7 +841,7 @@ unsigned int ImageRating(u8 *src, u8 *dest, int StartX, int StartY, int Width, i
     {
         for(x=StartX;x<(StartX+Width);x++)
         {
-            scradd=(image_y_max-y)*(160*3)+x*3;
+            scradd=(image_y_max-y)*(IMAGE_WIDTH*3)+x*3;
             tot=(*(src+scradd)-*(dest+scradd)) * (*(src+scradd)-*(dest+scradd));
             tot+=(*(src+scradd+1)-*(dest+scradd+1)) * (*(src+scradd+1)-*(dest+scradd+1));
             tot+=(*(src+scradd+2)-*(dest+scradd+2)) * (*(src+scradd+2)-*(dest+scradd+2));
@@ -883,7 +883,7 @@ void ConvertToHiColor(int ConvertType)
         case 2:
 
             StartSplit=0;
-            NumSplit=80;
+            NumSplit=HICOLOR_PATTERN_FIXED_COUNT;
             break;
 
         default:
@@ -922,7 +922,7 @@ void ConvertToHiColor(int ConvertType)
         case 2:
 
             StartSplit=0;
-            NumSplit=80;
+            NumSplit=HICOLOR_PATTERN_FIXED_COUNT;
             break;
 
         default:
@@ -943,11 +943,11 @@ void ConvertToHiColor(int ConvertType)
     // TODO: fix me -> pBitsdest being used in conversion process
     for(y=0;y<image_height;y++)
     {
-        for(x=0;x<160;x++)
+        for(x=0;x<IMAGE_WIDTH;x++)
         {
-            raw[0][x][y][0] = *(pBitsdest+(image_y_max-y)*3*160+x*3+2);
-            raw[0][x][y][1] = *(pBitsdest+(image_y_max-y)*3*160+x*3+1);
-            raw[0][x][y][2] = *(pBitsdest+(image_y_max-y)*3*160+x*3);
+            raw[0][x][y][0] = *(pBitsdest+(image_y_max-y)*3*IMAGE_WIDTH+x*3+2);
+            raw[0][x][y][1] = *(pBitsdest+(image_y_max-y)*3*IMAGE_WIDTH+x*3+1);
+            raw[0][x][y][2] = *(pBitsdest+(image_y_max-y)*3*IMAGE_WIDTH+x*3);
 
             RGBQUAD GBView=translate(raw[0][x][y]);
 
@@ -966,6 +966,7 @@ void ConvertToHiColor(int ConvertType)
 // StartY = 0 - 17 : Starting attribute block
 // Height = Number of attribute blocks to check / process
 
+// TODO: Fix region halves thing
 int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY, unsigned int Height, unsigned int StartJ, unsigned int FinishJ, int ConvertType)
 {
     DBG("ConvertRegions()\n");
@@ -1023,7 +1024,7 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
                             // i is iterating over r/g/b slots for the current pixel
                             for(i=0;i<3;i++)
                             {
-                                *(Data+(tw*3*y2)+x2*3+i) = pic[x*80+ts+x2][y*2+y2-y_offset][i];
+                                *(Data+(tw*3*y2)+x2*3+i) = pic[x*REGION_WIDTH+ts+x2][y*2+y2-y_offset][i];
                             }
                         }
                     }
@@ -1070,18 +1071,18 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
                             if ((y_line < image_y_min) || (y_line > image_y_max)) continue;
 
                             col=Picture256[y2*tw+x2];
-                            out[x*80+x2+ts][y*2+y2-y_offset]=col;
+                            out[x*REGION_WIDTH+x2+ts][y*2+y2-y_offset]=col;
 
                             for(i=0;i<3;i++)
                             {
-                                *(pBitsdest+(image_y_max-(y*2+y2-y_offset))*3*160+(x*80+ts+x2)*3+i)=QuantizedPalette[col][i];
+                                *(pBitsdest+(image_y_max-(y*2+y2-y_offset))*3*IMAGE_WIDTH+(x*REGION_WIDTH+ts+x2)*3+i)=QuantizedPalette[col][i];
                             }
                         }
                     }
                 }
             }
 
-            TempD=ImageRating(pBitssource,pBitsdest,StartX*80,StartY*8,Width*80,Height*8);
+            TempD=ImageRating(pBitssource,pBitsdest,StartX*REGION_WIDTH,StartY*8,Width*REGION_WIDTH,Height*8);
 
             if(TempD<BestQuantLine)
             {
