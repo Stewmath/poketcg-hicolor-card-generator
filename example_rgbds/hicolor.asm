@@ -113,13 +113,13 @@ hicolor_vbl::
 	ld a, [wPalettesAddr + 1]
 	ld h, a
 	ld bc, 16 << 8 | LOW(rBCPD)
-.copy
-	ld a, [hli]
-	ldh [c], a
-	ld a, [hli]
-	ldh [c], a
-	dec b
-	jr nz, .copy
+;; .copy
+;; 	ld a, [hli]
+;; 	ldh [c], a
+;; 	ld a, [hli]
+;; 	ldh [c], a
+;; 	dec b
+;; 	jr nz, .copy
 
 	; Write the pointer the interrupts will resume from.
 	ld a, l

@@ -198,7 +198,7 @@ static void hicolor_vars_prep(image_data * p_loaded_image) {
     // // 73(L) & 72(R) for standard GB screen
 
     // One extra region due to starting at -1 Y offset from screen grid, and so there is a last extra entry that "hangs off" the bottom of the screen
-    y_region_count_left         = ((image_height / PAL_REGION_HEIGHT_PX) + 1);
+    y_region_count_left         = ((image_height / PAL_REGION_HEIGHT_PX) + 0);
     y_region_count_right        =  (image_height / PAL_REGION_HEIGHT_PX);
     // Use larger size[side] for rounded up amount
     y_region_count_lr_rndup     =  (y_region_count_left);
@@ -206,7 +206,7 @@ static void hicolor_vars_prep(image_data * p_loaded_image) {
 
     // 19(L) & 18(R) for standard GB Full screen height
     // One extra region due to starting at -1 Y offset from screen grid, and so there is a last extra entry that "hangs off" the bottom of the screen
-    y_height_in_tiles_left      = ((image_height / TILE_HEIGHT_PX) + 1);
+    y_height_in_tiles_left      = ((image_height / TILE_HEIGHT_PX) + 0);
     y_height_in_tiles_right     =  (image_height / TILE_HEIGHT_PX);
     y_height_in_tiles           =  (image_height / TILE_HEIGHT_PX);
     // Use larger size[side] for rounded up amount
@@ -1081,13 +1081,13 @@ void ConvertToHiColor(int ConvertType)
     // Convert left side with one extra tile of height to fix
     // the glitching where the last scanline on left bottom region
     // lacks tile and palette data
-    res=ConvertRegions(0,1,0,y_height_in_tiles_left,StartSplit,NumSplit,ConvertType);        // Step through all options
-    ConvertRegions(0,1,0,y_height_in_tiles_left,res,1,ConvertType);
+    for (y=0; y<18; y++)
+    {
+        res=ConvertRegions(0,1,y,1,StartSplit,NumSplit,ConvertType);        // Step through all options
+        ConvertRegions(0,1,y,1,res,1,ConvertType);
 
-    // Formerly: for(y=0;y<189;y++)
-    // Treating it as a typo (intended a "18") since 189 would be out of bounds for the original array
-    for(y=0;y<y_height_in_tiles_left;y++)
         Best[0][y]=res;
+    }
 
 
     switch(RConversion)
@@ -1155,7 +1155,7 @@ void ConvertToHiColor(int ConvertType)
 int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY, unsigned int Height, unsigned int StartJ, unsigned int FinishJ, int ConvertType)
 {
     DBG("ConvertRegions()\n");
-    u32        width,x1,ts,tw,y2,x2,y_offset;
+    u32        x1,tw,y2,x2,y_offset;
     unsigned int        x,y;
     unsigned int        i,j;
     u8        col;
@@ -1168,9 +1168,9 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
         // Left side of screen is offset by -1 Y
         // (Left side calcs hang off top and bottom of screen
         // due to Left/Right palette update interleaving)
-        if (x == CONV_SIDE_LEFT)
-            y_offset = CONV_Y_SHIFT_UP_1;
-        else
+        /* if (x == CONV_SIDE_LEFT) */
+        /*     y_offset = CONV_Y_SHIFT_UP_1; */
+        /* else */
             y_offset = CONV_Y_SHIFT_NO;
 
         for(j=StartJ;j<(StartJ+FinishJ);j++)
