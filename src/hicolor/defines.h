@@ -53,7 +53,16 @@ enum pattern_types {
     HICOLOR_PATTERN_ADAPTIVE_BEST = 2,
 
     HICOLOR_PATTERN_ADAPTIVE_COUNT = 3,
+
+#if PALETTES_PER_REGION == 1
+    HICOLOR_PATTERN_FIXED_COUNT    = 1,
+#elif PALETTES_PER_REGION == 2
+    HICOLOR_PATTERN_FIXED_COUNT    = 7,
+#elif PALETTES_PER_REGION == 3
+    HICOLOR_PATTERN_FIXED_COUNT    = 21,
+#else
     HICOLOR_PATTERN_FIXED_COUNT    = 80,
+#endif
     HICOLOR_PATTERN_MIN = 0,
     HICOLOR_PATTERN_MAX = (HICOLOR_PATTERN_FIXED_COUNT - 1),
 
@@ -94,6 +103,10 @@ enum pattern_types {
 #define IMAGE_WIDTH_IN_TILES (IMAGE_WIDTH / 8)
 
 #define REGION_WIDTH (IMAGE_WIDTH / 2)
+
+// Number of palettes to use in a pokemon card.
+// Conceptually the same as PALS_PER_SIDE? Should I be changing that too?
+#define PALETTES_PER_REGION 3
 
 #define BYTES_PER_COLOR 2
 #define COLORS_PER_PAL  4

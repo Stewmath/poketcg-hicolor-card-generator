@@ -92,8 +92,8 @@ typedef struct
 
 
 // u8            QR[BUF_HEIGHT][IMAGE_WIDTH][3];
-u8            TileOffset[4];                 // Offset into screen for attribute start
-u8            TileWidth[4];                  // No of character attributes width
+u8            TileOffset[PALETTES_PER_REGION];                 // Offset into screen for attribute start
+u8            TileWidth[PALETTES_PER_REGION];                  // No of character attributes width
 u8            Pal[8][BUF_Y_REGION_COUNT_LR_RNDUP][28][3];             // Palettes for every other line
 u8            IdealPal[8][BUF_Y_REGION_COUNT_LR_RNDUP][4][3];         // The best fit palette
 u8            pic[IMAGE_WIDTH][BUF_HEIGHT][3];              // Original Picture
@@ -469,14 +469,14 @@ static void PrepareAttributes(void) {
         {
             int Line=Best[MastX][MastY];
             int width=0;
-            for(int i=0;i<4;i++)
+            for(int i=0;i<PALETTES_PER_REGION;i++)
             {
                 TileOffset[i]=width;
                 TileWidth[i]=SplitData[Line][i];
                 width+=TileWidth[i];
             }
 
-            for(int x=0;x<4;x++) {
+            for(int x=0;x<PALETTES_PER_REGION;x++) {
                 for(int z=TileOffset[x];z<(TileOffset[x]+TileWidth[x]);z++) {
                     MapAttributes[MastX*10+z][MastY]=x+MastX*4;
                     // Mask in second CGB Tile Bank flag if tile index is over 256 tiles
@@ -539,7 +539,7 @@ static void ExportPalettes(const char * fname_base)
 
     for (i = 0; i < (y_region_count_both_sides); i++) // Number of palette sets (left side updates + right side updates)
     {
-        for (j = 0; j < 4; j++) // Each palette in the set
+        for (j = 0; j < PALETTES_PER_REGION; j++) // Each palette in the set
         {
             for(k=0; k<4;k++) // Each color in the palette
             {
@@ -554,6 +554,11 @@ static void ExportPalettes(const char * fname_base)
                 *p_buf++ = (u8)(v & 255);
                 *p_buf++ = (u8)(v / 256);
             }
+        }
+
+        for (; j<4; j++)
+        {
+            p_buf += 8;
         }
     }
 
@@ -815,16 +820,26 @@ RGBQUAD translate(uint8_t rgb[3])
 
 // The higher the adaptive level, the more combinations of attributes are tested.
 
-u8    SplitData[HICOLOR_PATTERN_FIXED_COUNT][4]=
+u8    SplitData[HICOLOR_PATTERN_FIXED_COUNT][PALETTES_PER_REGION]=
 {
-    {3,2,3,2},{2,3,2,3},{2,2,3,3},{2,3,3,2},{3,2,2,3},{3,3,2,2},{4,2,2,2},{2,2,2,4},{2,2,4,2},{2,4,2,2},{1,1,2,6},
-    {1,1,3,5},{1,1,4,4},{1,1,5,3},{1,1,6,2},{1,2,1,6},{1,2,2,5},{1,2,3,4},{1,2,4,3},{1,2,5,2},{1,2,6,1},{1,3,1,5},
-    {1,3,2,4},{1,3,3,3},{1,3,4,2},{1,3,5,1},{1,4,1,4},{1,4,2,3},{1,4,3,2},{1,4,4,1},{1,5,1,3},{1,5,2,2},{1,5,3,1},
-    {1,6,1,2},{1,6,2,1},{2,1,1,6},{2,1,2,5},{2,1,3,4},{2,1,4,3},{2,1,5,2},{2,1,6,1},{2,2,1,5},{2,2,5,1},{2,3,1,4},
-    {2,3,4,1},{2,4,1,3},{2,4,3,1},{2,5,1,2},{2,5,2,1},{2,6,1,1},{3,1,1,5},{3,1,2,4},{3,1,3,3},{3,1,4,2},{3,1,5,1},
-    {3,2,1,4},{3,2,4,1},{3,3,1,3},{3,3,3,1},{3,4,1,2},{3,4,2,1},{3,5,1,1},{4,1,1,4},{4,1,2,3},{4,1,3,2},{4,1,4,1},
-    {4,2,1,3},{4,2,3,1},{4,3,1,2},{4,3,2,1},{4,4,1,1},{5,1,1,3},{5,1,2,2},{5,1,3,1},{5,2,1,2},{5,2,2,1},{5,3,1,1},
-    {6,1,1,2},{6,1,2,1},{6,2,1,1}
+#if PALETTES_PER_REGION == 1
+{8}
+#elif PALETTES_PER_REGION == 2
+{1,7},{2,6},{3,5},{4,4},{5,3},{6,2},{7,1}
+#elif PALETTES_PER_REGION == 3
+{1,1,6},{1,2,5},{1,3,4},{1,4,3},{1,5,2},{1,6,1},
+{2,1,5},{2,2,4},{2,3,3},{2,4,2},{2,5,1},
+{3,1,4},{3,2,3},{3,3,2},{3,4,1},
+{4,1,3},{4,2,2},{4,3,1},
+{5,1,2},{5,2,1},
+{6,1,1}
+#else
+{1,1,1,5},{1,1,2,4},{1,1,3,3},{1,1,4,2},{1,1,5,1},{1,2,1,4},{1,2,2,3},{1,2,3,2},{1,2,4,1},{1,3,1,3},{1,3,2,2},{1,3,3,1},{1,4,1,2},{1,4,2,1},{1,5,1,1},
+{2,1,1,4},{2,1,2,3},{2,1,3,2},{2,1,4,1},{2,2,1,3},{2,2,2,2},{2,2,3,1},{2,3,1,2},{2,3,2,1},{2,4,1,1},
+{3,1,1,3},{3,1,2,2},{3,1,3,1},{3,2,1,2},{3,2,2,1},{3,3,1,1},
+{4,1,1,2},{4,1,2,1},{4,2,1,1},
+{5,1,1,1}
+#endif
 };
 
 
@@ -991,7 +1006,7 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
         for(j=StartJ;j<(StartJ+FinishJ);j++)
         {
             width=0;
-            for(i=0;i<4;i++)
+            for(i=0;i<PALETTES_PER_REGION;i++)
             {
                 TileOffset[i]=width;
                 TileWidth[i]=SplitData[j][i]<<3;
@@ -1002,7 +1017,7 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
             {
                 VERBOSE(".");
 
-                for(x1=0;x1<4;x1++)
+                for(x1=0;x1<PALETTES_PER_REGION;x1++)
                 {
                     ts=TileOffset[x1];
                     tw=TileWidth[x1];

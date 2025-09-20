@@ -48,9 +48,9 @@ typedef struct pattern_entry {
 } pattern_entry;
 
 
-extern    u8               TileOffset[4];               // Offset into screen for attribute start
-extern    u8               TileWidth[4];                // No of character attributes width
-extern    u8               SplitData[HICOLOR_PATTERN_FIXED_COUNT][4];
+extern    u8               TileOffset[PALETTES_PER_REGION];               // Offset into screen for attribute start
+extern    u8               TileWidth[PALETTES_PER_REGION];                // No of character attributes width
+extern    u8               SplitData[HICOLOR_PATTERN_FIXED_COUNT][PALETTES_PER_REGION];
 
 extern    RGBQUAD          GBView;
 
