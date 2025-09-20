@@ -468,21 +468,15 @@ static void PrepareAttributes(void) {
         for(unsigned int MastX=0;MastX<2;MastX++)
         {
             int Line=Best[MastX][MastY];
-            int width=0;
-            for(int i=0;i<PALETTES_PER_REGION;i++)
-            {
-                TileOffset[i]=width;
-                TileWidth[i]=SplitData[Line][i];
-                width+=TileWidth[i];
-            }
 
-            for(int x=0;x<PALETTES_PER_REGION;x++) {
-                for(int z=TileOffset[x];z<(TileOffset[x]+TileWidth[x]);z++) {
-                    MapAttributes[MastX*10+z][MastY]=x+MastX*4;
-                    // Mask in second CGB Tile Bank flag if tile index is over 256 tiles
-                    if (tile_id++ >= 256)
-                        MapAttributes[MastX*10+z][MastY] |= CGB_ATTR_TILES_BANK_1;
-                }
+            for (int z=0; z<8; z++)
+            {
+                int x = SplitData[Line][z];
+                MapAttributes[MastX*10+z][MastY]=x+MastX*4; // Assign palette
+
+                // Mask in second CGB Tile Bank flag if tile index is over 256 tiles
+                if (tile_id++ >= 256)
+                    MapAttributes[MastX*10+z][MastY] |= CGB_ATTR_TILES_BANK_1;
             }
         }
     }
@@ -820,19 +814,195 @@ RGBQUAD translate(uint8_t rgb[3])
 
 // The higher the adaptive level, the more combinations of attributes are tested.
 
-u8    SplitData[HICOLOR_PATTERN_FIXED_COUNT][PALETTES_PER_REGION]=
+u8    SplitData[HICOLOR_PATTERN_FIXED_COUNT][8]=
 {
 #if PALETTES_PER_REGION == 1
-{8}
+{0, 0, 0, 0, 0, 0, 0, 0}
 #elif PALETTES_PER_REGION == 2
-{1,7},{2,6},{3,5},{4,4},{5,3},{6,2},{7,1}
+{0, 1, 1, 1, 1, 1, 1, 1},
+{0, 0, 1, 1, 1, 1, 1, 1},
+{0, 0, 0, 1, 1, 1, 1, 1},
+{0, 0, 0, 0, 1, 1, 1, 1},
+{0, 0, 0, 0, 0, 1, 1, 1},
+{0, 0, 0, 0, 0, 0, 1, 1},
+{0, 0, 0, 0, 0, 0, 0, 1},
+
+{0, 1, 1, 1, 1, 1, 1, 0},
+{0, 0, 1, 1, 1, 1, 1, 0},
+{0, 0, 0, 1, 1, 1, 1, 0},
+{0, 0, 0, 0, 1, 1, 1, 0},
+{0, 0, 0, 0, 0, 1, 1, 0},
+{0, 0, 0, 0, 0, 0, 1, 0},
+
+{0, 1, 1, 1, 1, 1, 0, 0},
+{0, 0, 1, 1, 1, 1, 0, 0},
+{0, 0, 0, 1, 1, 1, 0, 0},
+{0, 0, 0, 0, 1, 1, 0, 0},
+{0, 0, 0, 0, 0, 1, 0, 0},
+
+{0, 1, 1, 1, 1, 0, 0, 0},
+{0, 0, 1, 1, 1, 0, 0, 0},
+{0, 0, 0, 1, 1, 0, 0, 0},
+{0, 0, 0, 0, 1, 0, 0, 0},
+
+{0, 1, 1, 1, 0, 0, 0, 0},
+{0, 0, 1, 1, 0, 0, 0, 0},
+{0, 0, 0, 1, 0, 0, 0, 0},
+
+{0, 1, 1, 0, 0, 0, 0, 0},
+{0, 0, 1, 0, 0, 0, 0, 0},
+
+{0, 1, 0, 0, 0, 0, 0, 0},
+
 #elif PALETTES_PER_REGION == 3
-{1,1,6},{1,2,5},{1,3,4},{1,4,3},{1,5,2},{1,6,1},
-{2,1,5},{2,2,4},{2,3,3},{2,4,2},{2,5,1},
-{3,1,4},{3,2,3},{3,3,2},{3,4,1},
-{4,1,3},{4,2,2},{4,3,1},
-{5,1,2},{5,2,1},
-{6,1,1}
+{0, 0, 0, 0, 0, 0, 1, 2},
+{0, 0, 0, 0, 0, 1, 1, 2},
+{0, 0, 0, 0, 0, 1, 2, 2},
+{0, 0, 0, 0, 1, 1, 1, 2},
+{0, 0, 0, 0, 1, 1, 2, 2},
+{0, 0, 0, 0, 1, 2, 2, 2},
+{0, 0, 0, 1, 1, 1, 1, 2},
+{0, 0, 0, 1, 1, 1, 2, 2},
+{0, 0, 0, 1, 1, 2, 2, 2},
+{0, 0, 0, 1, 2, 2, 2, 2},
+{0, 0, 1, 1, 1, 1, 1, 2},
+{0, 0, 1, 1, 1, 1, 2, 2},
+{0, 0, 1, 1, 1, 2, 2, 2},
+{0, 0, 1, 1, 2, 2, 2, 2},
+{0, 0, 1, 2, 2, 2, 2, 2},
+{0, 1, 1, 1, 1, 1, 1, 2},
+{0, 1, 1, 1, 1, 1, 2, 2},
+{0, 1, 1, 1, 1, 2, 2, 2},
+{0, 1, 1, 1, 2, 2, 2, 2},
+{0, 1, 1, 2, 2, 2, 2, 2},
+{0, 1, 2, 2, 2, 2, 2, 2},
+
+{0, 0, 0, 0, 0, 1, 2, 0},
+{0, 0, 0, 0, 1, 1, 2, 0},
+{0, 0, 0, 0, 1, 2, 2, 0},
+{0, 0, 0, 1, 1, 1, 2, 0},
+{0, 0, 0, 1, 1, 2, 2, 0},
+{0, 0, 0, 1, 2, 2, 2, 0},
+{0, 0, 1, 1, 1, 1, 2, 0},
+{0, 0, 1, 1, 1, 2, 2, 0},
+{0, 0, 1, 1, 2, 2, 2, 0},
+{0, 0, 1, 2, 2, 2, 2, 0},
+{0, 1, 1, 1, 1, 1, 2, 0},
+{0, 1, 1, 1, 1, 2, 2, 0},
+{0, 1, 1, 1, 2, 2, 2, 0},
+{0, 1, 1, 2, 2, 2, 2, 0},
+{0, 1, 2, 2, 2, 2, 2, 0},
+
+{0, 0, 0, 0, 0, 1, 2, 1},
+{0, 0, 0, 0, 1, 1, 2, 1},
+{0, 0, 0, 0, 1, 2, 2, 1},
+{0, 0, 0, 1, 1, 1, 2, 1},
+{0, 0, 0, 1, 1, 2, 2, 1},
+{0, 0, 0, 1, 2, 2, 2, 1},
+{0, 0, 1, 1, 1, 1, 2, 1},
+{0, 0, 1, 1, 1, 2, 2, 1},
+{0, 0, 1, 1, 2, 2, 2, 1},
+{0, 0, 1, 2, 2, 2, 2, 1},
+{0, 1, 1, 1, 1, 1, 2, 1},
+{0, 1, 1, 1, 1, 2, 2, 1},
+{0, 1, 1, 1, 2, 2, 2, 1},
+{0, 1, 1, 2, 2, 2, 2, 1},
+{0, 1, 2, 2, 2, 2, 2, 1},
+
+{0, 0, 0, 0, 1, 2, 0, 0},
+{0, 0, 0, 1, 1, 2, 0, 0},
+{0, 0, 0, 1, 2, 2, 0, 0},
+{0, 0, 1, 1, 1, 2, 0, 0},
+{0, 0, 1, 1, 2, 2, 0, 0},
+{0, 0, 1, 2, 2, 2, 0, 0},
+{0, 1, 1, 1, 1, 2, 0, 0},
+{0, 1, 1, 1, 2, 2, 0, 0},
+{0, 1, 1, 2, 2, 2, 0, 0},
+{0, 1, 2, 2, 2, 2, 0, 0},
+
+{0, 0, 0, 0, 1, 2, 1, 0},
+{0, 0, 0, 1, 1, 2, 1, 0},
+{0, 0, 0, 1, 2, 2, 1, 0},
+{0, 0, 1, 1, 1, 2, 1, 0},
+{0, 0, 1, 1, 2, 2, 1, 0},
+{0, 0, 1, 2, 2, 2, 1, 0},
+{0, 1, 1, 1, 1, 2, 1, 0},
+{0, 1, 1, 1, 2, 2, 1, 0},
+{0, 1, 1, 2, 2, 2, 1, 0},
+{0, 1, 2, 2, 2, 2, 1, 0},
+
+{0, 0, 0, 0, 1, 2, 1, 1},
+{0, 0, 0, 1, 1, 2, 1, 1},
+{0, 0, 0, 1, 2, 2, 1, 1},
+{0, 0, 1, 1, 1, 2, 1, 1},
+{0, 0, 1, 1, 2, 2, 1, 1},
+{0, 0, 1, 2, 2, 2, 1, 1},
+{0, 1, 1, 1, 1, 2, 1, 1},
+{0, 1, 1, 1, 2, 2, 1, 1},
+{0, 1, 1, 2, 2, 2, 1, 1},
+{0, 1, 2, 2, 2, 2, 1, 1},
+
+{0, 0, 0, 1, 2, 0, 0, 0},
+{0, 0, 1, 1, 2, 0, 0, 0},
+{0, 0, 1, 2, 2, 0, 0, 0},
+{0, 1, 1, 1, 2, 0, 0, 0},
+{0, 1, 1, 2, 2, 0, 0, 0},
+{0, 1, 2, 2, 2, 0, 0, 0},
+
+{0, 0, 0, 1, 2, 1, 0, 0},
+{0, 0, 1, 1, 2, 1, 0, 0},
+{0, 0, 1, 2, 2, 1, 0, 0},
+{0, 1, 1, 1, 2, 1, 0, 0},
+{0, 1, 1, 2, 2, 1, 0, 0},
+{0, 1, 2, 2, 2, 1, 0, 0},
+
+{0, 0, 0, 1, 2, 1, 1, 0},
+{0, 0, 1, 1, 2, 1, 1, 0},
+{0, 0, 1, 2, 2, 1, 1, 0},
+{0, 1, 1, 1, 2, 1, 1, 0},
+{0, 1, 1, 2, 2, 1, 1, 0},
+{0, 1, 2, 2, 2, 1, 1, 0},
+
+{0, 0, 0, 1, 2, 1, 1, 1},
+{0, 0, 1, 1, 2, 1, 1, 1},
+{0, 0, 1, 2, 2, 1, 1, 1},
+{0, 1, 1, 1, 2, 1, 1, 1},
+{0, 1, 1, 2, 2, 1, 1, 1},
+{0, 1, 2, 2, 2, 1, 1, 1},
+
+{0, 0, 1, 2, 0, 0, 0, 0},
+{0, 1, 1, 2, 0, 0, 0, 0},
+{0, 1, 2, 2, 0, 0, 0, 0},
+
+{0, 0, 1, 2, 1, 0, 0, 0},
+{0, 1, 1, 2, 1, 0, 0, 0},
+{0, 1, 2, 2, 1, 0, 0, 0},
+
+{0, 0, 1, 2, 1, 1, 0, 0},
+{0, 1, 1, 2, 1, 1, 0, 0},
+{0, 1, 2, 2, 1, 1, 0, 0},
+
+{0, 0, 1, 2, 1, 1, 1, 0},
+{0, 1, 1, 2, 1, 1, 1, 0},
+{0, 1, 2, 2, 1, 1, 1, 0},
+
+{0, 0, 1, 2, 1, 1, 1, 1},
+{0, 1, 1, 2, 1, 1, 1, 1},
+{0, 1, 2, 2, 1, 1, 1, 1},
+
+{0, 1, 2, 0, 0, 0, 0, 0},
+{0, 1, 2, 1, 0, 0, 0, 0},
+{0, 1, 2, 1, 1, 0, 0, 0},
+{0, 1, 2, 1, 1, 1, 0, 0},
+{0, 1, 2, 1, 1, 1, 1, 0},
+{0, 1, 2, 1, 1, 1, 1, 1},
+
+/* {1,1,6},{1,2,5},{1,3,4},{1,4,3},{1,5,2},{1,6,1}, */
+/* {2,1,5},{2,2,4},{2,3,3},{2,4,2},{2,5,1}, */
+/* {3,1,4},{3,2,3},{3,3,2},{3,4,1}, */
+/* {4,1,3},{4,2,2},{4,3,1}, */
+/* {5,1,2},{5,2,1}, */
+/* {6,1,1} */
 #else
 {1,1,1,5},{1,1,2,4},{1,1,3,3},{1,1,4,2},{1,1,5,1},{1,2,1,4},{1,2,2,3},{1,2,3,2},{1,2,4,1},{1,3,1,3},{1,3,2,2},{1,3,3,1},{1,4,1,2},{1,4,2,1},{1,5,1,1},
 {2,1,1,4},{2,1,2,3},{2,1,3,2},{2,1,4,1},{2,2,1,3},{2,2,2,2},{2,2,3,1},{2,3,1,2},{2,3,2,1},{2,4,1,1},
@@ -1005,22 +1175,21 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
 
         for(j=StartJ;j<(StartJ+FinishJ);j++)
         {
-            width=0;
-            for(i=0;i<PALETTES_PER_REGION;i++)
-            {
-                TileOffset[i]=width;
-                TileWidth[i]=SplitData[j][i]<<3;
-                width+=TileWidth[i];
-            }
-
             for(y=StartY*4;y<(StartY+Height)*4;y++)
             {
                 VERBOSE(".");
 
+                // x1 = Palette index to process
                 for(x1=0;x1<PALETTES_PER_REGION;x1++)
                 {
-                    ts=TileOffset[x1];
-                    tw=TileWidth[x1];
+                    // Calculate number of tiles in line
+                    tw=0;
+                    for(x2=0;x2<8;x2++)
+                    {
+                        if (SplitData[j][x2] != x1)
+                            continue;
+                        tw += 8;
+                    }
 
                     for(y2=0;y2<2;y2++)
                     {
@@ -1034,12 +1203,23 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
                         unsigned int y_line = (y*2+y2-y_offset);
                         if ((y_line < image_y_min) || (y_line > image_y_max)) continue;
 
-                        for(x2=0;x2<tw;x2++)
+                        unsigned int data_offset = 0;
+
+                        // Iterate over tiles
+                        for(x2=0;x2<8;x2++)
                         {
-                            // i is iterating over r/g/b slots for the current pixel
-                            for(i=0;i<3;i++)
+                            if (SplitData[j][x2] != x1)
+                                continue;
+
+                            // Iterate over horizontal pixels in the tile
+                            for (int k=0; k<8; k++)
                             {
-                                *(Data+(tw*3*y2)+x2*3+i) = pic[x*REGION_WIDTH+ts+x2][y*2+y2-y_offset][i];
+                                // i is iterating over r/g/b slots for the current pixel
+                                for(i=0;i<3;i++)
+                                {
+                                    *(Data+(tw*y2*3)+data_offset*3+i) = pic[x*REGION_WIDTH+x2*8+k][y*2+y2-y_offset][i];
+                                }
+                                data_offset++;
                             }
                         }
                     }
@@ -1047,16 +1227,15 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
                     switch(ConvertType)
                     {
                         case 0:
-                            to_indexed(Data,0,TileWidth[x1],2);            // Median Reduction No Dither
+                            to_indexed(Data,0,tw,2);            // Median Reduction No Dither
                             break;
 
                         case 1:
-
-                            to_indexed(Data,1,TileWidth[x1],2);            // Median Reduction With Dither
+                            to_indexed(Data,1,tw,2);            // Median Reduction With Dither
                             break;
 
                         case 2:
-                            wuReduce(Data,4,TileWidth[x1]*2);                // Wu Reduction
+                            wuReduce(Data,4,tw*2);                // Wu Reduction
                             break;
                     }
 
@@ -1074,8 +1253,13 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
 
                     for(y2=0;y2<2;y2++)
                     {
-                        for(x2=0;x2<tw;x2++)
+                        unsigned int data_offset = 0;
+                        // Iterate over horizontal tiles
+                        for(x2=0;x2<8;x2++)
                         {
+                            if (SplitData[j][x2] != x1)
+                                continue;
+
                             // Skip case where y_line would evaluate to -1 to avoid unsigned wraparound)
                             // (scanline 0, left side of the image where 80 x 2 pixel box goes from scanline -1 to 0)
                             if (y_offset > ((y*2) + y2)) continue;
@@ -1085,12 +1269,19 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
                             unsigned int y_line = (y*2+y2-y_offset);
                             if ((y_line < image_y_min) || (y_line > image_y_max)) continue;
 
-                            col=Picture256[y2*tw+x2];
-                            out[x*REGION_WIDTH+x2+ts][y*2+y2-y_offset]=col;
-
-                            for(i=0;i<3;i++)
+                            // Iterate over horizontal pixels within the tile
+                            for (int k=0; k<8; k++)
                             {
-                                *(pBitsdest+(image_y_max-(y*2+y2-y_offset))*3*IMAGE_WIDTH+(x*REGION_WIDTH+ts+x2)*3+i)=QuantizedPalette[col][i];
+                                col=Picture256[y2*tw+data_offset];
+                                data_offset++;
+
+                                // TODO: Is this correct? When writing the tileset it may use the wrong "out"?
+                                out[x*REGION_WIDTH+x2*8+k][y*2+y2-y_offset]=col;
+
+                                for(i=0;i<3;i++)
+                                {
+                                    *(pBitsdest+(image_y_max-(y*2+y2-y_offset))*3*IMAGE_WIDTH+(x*REGION_WIDTH+x2*8+k)*3+i)=QuantizedPalette[col][i];
+                                }
                             }
                         }
                     }

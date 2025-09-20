@@ -38,6 +38,10 @@ typedef struct tagRGBQUAD {
 #define s16 int16_t
 #define s32 int32_t
 
+// Number of palettes to use in a pokemon card.
+// Conceptually the same as PALS_PER_SIDE? Should I be changing that too?
+#define PALETTES_PER_REGION 3
+
 enum conversion_types {
     CONV_TYPE_MED_CUT_NO_DITHER = 1,
     CONV_TYPE_MED_CUT_YES_DITHER = 2,
@@ -57,9 +61,9 @@ enum pattern_types {
 #if PALETTES_PER_REGION == 1
     HICOLOR_PATTERN_FIXED_COUNT    = 1,
 #elif PALETTES_PER_REGION == 2
-    HICOLOR_PATTERN_FIXED_COUNT    = 7,
+    HICOLOR_PATTERN_FIXED_COUNT    = 28,
 #elif PALETTES_PER_REGION == 3
-    HICOLOR_PATTERN_FIXED_COUNT    = 21,
+    HICOLOR_PATTERN_FIXED_COUNT    = 126,
 #else
     HICOLOR_PATTERN_FIXED_COUNT    = 80,
 #endif
@@ -103,10 +107,6 @@ enum pattern_types {
 #define IMAGE_WIDTH_IN_TILES (IMAGE_WIDTH / 8)
 
 #define REGION_WIDTH (IMAGE_WIDTH / 2)
-
-// Number of palettes to use in a pokemon card.
-// Conceptually the same as PALS_PER_SIDE? Should I be changing that too?
-#define PALETTES_PER_REGION 3
 
 #define BYTES_PER_COLOR 2
 #define COLORS_PER_PAL  4
