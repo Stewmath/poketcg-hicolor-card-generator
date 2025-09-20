@@ -155,11 +155,9 @@ static unsigned int image_y_min;
 static unsigned int image_y_max;
 static unsigned int image_height;
 static unsigned int y_region_count_left;
-static unsigned int y_region_count_right;
 static unsigned int y_region_count_lr_rndup;
 static unsigned int y_region_count_both_sides;
 static unsigned int y_height_in_tiles_left;
-static unsigned int y_height_in_tiles_right;
 static unsigned int y_height_in_tiles;
 static unsigned int y_height_in_tiles_lr_rndup;
 
@@ -199,15 +197,13 @@ static void hicolor_vars_prep(image_data * p_loaded_image) {
 
     // One extra region due to starting at -1 Y offset from screen grid, and so there is a last extra entry that "hangs off" the bottom of the screen
     y_region_count_left         = ((image_height / PAL_REGION_HEIGHT_PX) + 0);
-    y_region_count_right        =  (image_height / PAL_REGION_HEIGHT_PX);
     // Use larger size[side] for rounded up amount
     y_region_count_lr_rndup     =  (y_region_count_left);
-    y_region_count_both_sides   =  (y_region_count_left + y_region_count_right);
+    y_region_count_both_sides   =  (y_region_count_left);
 
     // 19(L) & 18(R) for standard GB Full screen height
     // One extra region due to starting at -1 Y offset from screen grid, and so there is a last extra entry that "hangs off" the bottom of the screen
     y_height_in_tiles_left      = ((image_height / TILE_HEIGHT_PX) + 0);
-    y_height_in_tiles_right     =  (image_height / TILE_HEIGHT_PX);
     y_height_in_tiles           =  (image_height / TILE_HEIGHT_PX);
     // Use larger size[side] for rounded up amount
     y_height_in_tiles_lr_rndup  =  (y_height_in_tiles_left);
@@ -463,9 +459,9 @@ static void PrepareMap(void) {
 static void PrepareAttributes(void) {
     // Set up the Map Attributes table
     unsigned int tile_id = 0;
-    for(unsigned int MastY=0;MastY<y_height_in_tiles_right;MastY++)
+    for(unsigned int MastY=0;MastY<y_height_in_tiles_left;MastY++)
     {
-        for(unsigned int MastX=0;MastX<2;MastX++)
+        for(unsigned int MastX=0;MastX<1;MastX++)
         {
             int Line=Best[MastX][MastY];
 
@@ -519,7 +515,7 @@ static void ExportPalettes(const char * fname_base)
     VERBOSE("Writing Palette to: %s\n", filename);
 
     // No longer +1 for the trailing 0x2D
-    int outbuf_sz_pals = (y_region_count_both_sides * PALS_PER_SIDE * COLORS_PER_PAL * BYTES_PER_COLOR);
+    int outbuf_sz_pals = (y_region_count_left * PALETTES_PER_REGION * COLORS_PER_PAL * BYTES_PER_COLOR);
 
     // Handle resize if trailing end colors have been appended
     if (opt_get_enable_pal_end_color()) {
@@ -531,15 +527,15 @@ static void ExportPalettes(const char * fname_base)
     uint8_t * p_buf = output_buf;
 
 
-    for (i = 0; i < (y_region_count_both_sides); i++) // Number of palette sets (left side updates + right side updates)
+    for (i = 0; i < (y_region_count_left); i++) // Number of palette sets
     {
         for (j = 0; j < PALETTES_PER_REGION; j++) // Each palette in the set
         {
             for(k=0; k<4;k++) // Each color in the palette
             {
-                r = IdealPal[(i%2)*4+j][i/2][k][0];
-                g = IdealPal[(i%2)*4+j][i/2][k][1];
-                b = IdealPal[(i%2)*4+j][i/2][k][2];
+                r = IdealPal[j][i][k][0];
+                g = IdealPal[j][i][k][1];
+                b = IdealPal[j][i][k][2];
 
                 // Converting to BGR555
                 v = ((b/8)*32*32) + ((g/8)*32) + (r/8);
@@ -548,11 +544,6 @@ static void ExportPalettes(const char * fname_base)
                 *p_buf++ = (u8)(v & 255);
                 *p_buf++ = (u8)(v / 256);
             }
-        }
-
-        for (; j<4; j++)
-        {
-            p_buf += 8;
         }
     }
 
@@ -1081,47 +1072,12 @@ void ConvertToHiColor(int ConvertType)
     // Convert left side with one extra tile of height to fix
     // the glitching where the last scanline on left bottom region
     // lacks tile and palette data
-    for (y=0; y<18; y++)
+    for (y=0; y<y_height_in_tiles; y++)
     {
         res=ConvertRegions(0,1,y,1,StartSplit,NumSplit,ConvertType);        // Step through all options
         ConvertRegions(0,1,y,1,res,1,ConvertType);
 
         Best[0][y]=res;
-    }
-
-
-    switch(RConversion)
-    {
-        case 0:
-
-            StartSplit=0;
-            NumSplit=6;
-            break;
-
-        case 1:
-
-            StartSplit=0;
-            NumSplit=10;
-            break;
-
-        case 2:
-
-            StartSplit=0;
-            NumSplit=HICOLOR_PATTERN_FIXED_COUNT;
-            break;
-
-        default:
-
-            StartSplit=RConversion-3;
-            NumSplit=1;
-            break;
-    }
-
-    for(y=0;y<y_height_in_tiles_right;y++)
-    {
-        res=ConvertRegions(1,1,y,1,StartSplit,NumSplit,ConvertType);        // Step through all options
-        ConvertRegions(1,1,y,1,res,1,ConvertType);
-        Best[1][y]=res;
     }
 
 
@@ -1165,13 +1121,8 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
 
     for(x=StartX;x<(StartX+Width);x++)
     {
-        // Left side of screen is offset by -1 Y
-        // (Left side calcs hang off top and bottom of screen
-        // due to Left/Right palette update interleaving)
-        /* if (x == CONV_SIDE_LEFT) */
-        /*     y_offset = CONV_Y_SHIFT_UP_1; */
-        /* else */
-            y_offset = CONV_Y_SHIFT_NO;
+        // Disabled Y offset shenanigans for TCG
+        y_offset = CONV_Y_SHIFT_NO;
 
         for(j=StartJ;j<(StartJ+FinishJ);j++)
         {
@@ -1288,7 +1239,7 @@ int ConvertRegions(unsigned int StartX, unsigned int Width, unsigned int StartY,
                 }
             }
 
-            TempD=ImageRating(pBitssource,pBitsdest,StartX*REGION_WIDTH,StartY*8,Width*REGION_WIDTH,Height*8);
+            TempD=ImageRating(pBitssource,pBitsdest,StartX*REGION_WIDTH*8,StartY*8,Width*REGION_WIDTH*8,Height*8);
 
             if(TempD<BestQuantLine)
             {

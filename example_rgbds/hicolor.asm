@@ -9,7 +9,7 @@ LoadHiColorPicture::
 
 	; First, write the tilemap.
 	ld hl, $9C00
-	call .writeScreen
+	call .writeCard
 
 	; Then, write the first tile "block".
 	ld a, [de]
@@ -39,7 +39,7 @@ LoadHiColorPicture::
 	ld a, 1
 	ldh [rVBK], a
 	ld hl, $9C00
-	call .writeScreen
+	call .writeCard
 
 	; And finally, register the pointer to the palette data.
 	ld a, e
@@ -58,11 +58,11 @@ LoadHiColorPicture::
 	ret
 
 
-.writeScreen
-	ld b, SCRN_Y_B
+.writeCard
+	ld b, CARD_Y_B
 
 .nextRow
-	ld c, SCRN_X_B
+	ld c, CARD_X_B
 :
 	ld a, [de]
 	ld [hli], a
@@ -71,9 +71,9 @@ LoadHiColorPicture::
 	jr nz, :-
 
 	; Go to the next tilemap row.
-	; hl += <tilemap width> - <screen width>
+	; hl += <tilemap width> - <card width>
 	ld a, l
-	add SCRN_VX_B - SCRN_X_B
+	add SCRN_VX_B - CARD_X_B
 	ld l, a
 	adc a, h
 	sub l
@@ -136,6 +136,17 @@ hicolor_vbl::
 
 
 hicolor_stat::
+	ldh a,[rLY]
+	cp $90
+	jr z,.cont
+	and 1
+	jr z,.ret
+
+.cont
+	; Reset bg palette index to write
+	ld a, BCPSF_AUTOINC
+	ldh [rBCPS], a
+
 	ld [wSPBackup], sp ; Save SP so we can return to normalcy later.
 
 	; Point SP to the palette data.
@@ -159,7 +170,7 @@ hicolor_stat::
 	ld [hl], c
 	ld [hl], b
 	; Write the rest.
-REPT 16 - 2 ; 16 colors, minus the two already written above.
+REPT 12 - 2 ; 12 colors, minus the two already written above.
 	pop de ; One color is two bytes.
 	ld [hl], e
 	ld [hl], d
@@ -173,6 +184,7 @@ ENDR
 	pop hl
 	ld sp, hl
 
+.ret
 	; Clean up and return.
 	pop hl
 	pop de
